@@ -1,0 +1,33 @@
+
+{ Teste 4: Operadores relacionais e expressões complexas }
+programa teste4;
+var
+    x, y, z : inteiro;
+    resultado : inteiro;
+inicio
+    escrever('Digite tres numeros:');
+    ler(x, y, z);
+    
+    { Testa diferentes operadores relacionais }
+    se x = y entao
+        escrever('x igual a y');
+    
+    se x <> y entao
+        escrever('x diferente de y');
+    
+    se x < y entao
+        escrever('x menor que y');
+    
+    se x <= y entao
+        escrever('x menor ou igual a y');
+    
+    se x > y entao
+        escrever('x maior que y');
+    
+    se x >= y entao
+        escrever('x maior ou igual a y');
+    
+    { Expressão complexa }
+    resultado := (x + y) * z - (x - y);
+    escrever('Resultado da expressao complexa:', resultado);
+fim.
