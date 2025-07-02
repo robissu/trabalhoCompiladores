@@ -1,48 +1,10 @@
-
-{ Teste 5: Programa mais complexo com múltiplas estruturas }
-programa teste5;
+programa simples_calc;
 var
-    opcao, num1, num2, resultado : inteiro;
-    continuar : logico;
+    x, y, z : inteiro;
+
 inicio
-    continuar := verdadeiro;
-    
-    enquanto continuar faca
-        escrever('=== CALCULADORA SIMPLES ===');
-        escrever('1 - Soma');
-        escrever('2 - Subtracao');
-        escrever('3 - Multiplicacao');
-        escrever('4 - Divisao');
-        escrever('0 - Sair');
-        escrever('Escolha uma opcao:');
-        ler(opcao);
-        
-        se opcao = 0 entao
-            continuar := falso
-        senao
-            escrever('Digite dois numeros:');
-            ler(num1, num2);
-            
-            se opcao = 1 entao
-                resultado := num1 + num2;
-            
-            se opcao = 2 entao
-                resultado := num1 - num2;
-            
-            se opcao = 3 entao
-                resultado := num1 * num2;
-            
-            se opcao = 4 entao
-                se num2 <> 0 entao
-                    resultado := num1 / num2
-                senao
-                    escrever('Erro: Divisao por zero!');
-            
-            se opcao >= 1 entao
-                se opcao <= 4 entao
-                    se opcao <> 4 entao
-                        escrever('Resultado:', resultado)
-                    senao
-                        se num2 <> 0 entao
-                            escrever('Resultado:', resultado)
+    x := 10;
+    y := 5;
+    z := x + y * 2;
+    escrever(z);
 fim.

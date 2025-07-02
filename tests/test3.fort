@@ -10,11 +10,10 @@ inicio
     contador := 1;
     soma := 0;
     
-    enquanto contador <= limite faca
+    enquanto (contador <= limite) faca
         soma := soma + contador;
         contador := contador + 1;
     fim_enquanto;  
-        
     
     escrever('Soma dos numeros de 1 ate', limite, 'eh:', soma);
 fim.

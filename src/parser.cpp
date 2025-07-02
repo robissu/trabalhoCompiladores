@@ -295,16 +295,31 @@ ASTNodePtr Parser::parseSe()
 {
     auto node = std::make_shared<ASTNode>(NodeType::SE);
 
-    if (!expect(TokenType::SE))
+    if (!expect(TokenType::SE)) // Consome 'se'
     {
         return nullptr;
     }
 
-    auto expr = parseExpressao();
+    // Verifica se há um parêntese esquerdo (ABRE_PARENTESES)
+    bool hasParentheses = false;
+    if (match(TokenType::PARENTESE_ESQ)) { // Verifica se o próximo token é '('
+        hasParentheses = true;
+        advance(); // Consome o '('
+    }
+
+    auto expr = parseExpressao(); // Parsers a expressão
     if (expr)
         node->addChild(expr);
 
-    if (!expect(TokenType::ENTAO))
+    // Se encontramos um '(' antes da expressão, agora esperamos um ')' depois dela
+    if (hasParentheses) {
+        if (!expect(TokenType::PARENTESE_DIR)) { // Consome o ')'
+            error("Esperado ')' apos a condição do 'se'.");
+            return nullptr;
+        }
+    }
+
+    if (!expect(TokenType::ENTAO)) // Consome 'entao'
     {
         error("Esperado 'entao' apos condição");
         return nullptr;
@@ -329,12 +344,20 @@ ASTNodePtr Parser::parseEnquanto()
 {
     auto whileNode = std::make_shared<ASTNode>(NodeType::ENQUANTO, currentToken);
 
-    if (!expect(TokenType::ENQUANTO))
+    if (!expect(TokenType::ENQUANTO)) // Consome 'enquanto'
     {
         return nullptr;
     }
 
-    auto condition = parseExpressao();
+
+    // Verifica se há um parêntese esquerdo (ABRE_PARENTESES)
+    bool hasParentheses = false;
+    if (match(TokenType::PARENTESE_ESQ)) { // Verifica se o próximo token é '('
+        hasParentheses = true;
+        advance(); // Consome o '('
+    }
+
+    auto condition = parseExpressao(); // Parsers a expressão (que pode ter outros parênteses internos)
     if (!condition)
     {
         error("Condição esperada para o comando 'enquanto'.");
@@ -342,7 +365,16 @@ ASTNodePtr Parser::parseEnquanto()
     }
     whileNode->addChild(condition);
 
-    if (!expect(TokenType::FACA))
+    // Se encontramos um '(' antes da expressão, então esperamos um ')' depois dela
+    if (hasParentheses) {
+        if (!expect(TokenType::PARENTESE_DIR)) { // Consome o ')'
+            error("Esperado ')' apos a condição do 'enquanto'.");
+            return nullptr;
+        }
+    }
+
+
+    if (!expect(TokenType::FACA)) // Consome 'faca'
     {
         error("Esperado 'faca' apos a condição do 'enquanto'.");
         return nullptr;
@@ -367,26 +399,28 @@ ASTNodePtr Parser::parseEnquanto()
             return nullptr;
         }
 
-        // --- ALTERAÇÃO AQUI: Torna o ';' obrigatório ---
-        // Exige ';' apos cada comando, a menos que seja o FIM_ENQUANTO ou FIM_ARQUIVO.
-        // FIM_ENQUANTO não será mais uma exceção para a ausência de ';'.
+        // Correção no ';': um comando simples deve ter ';'. Um bloco de chaves não.
+        // Se a regra é "qualquer comando dentro do laço deve ter ';'",
+        // então seu parseComando() precisa ser capaz de diferenciar um comando simples de um bloco.
+        // Assumindo que parseComando() já retorna um comando simples ou um bloco completo.
+        // Se `parseComando` nunca retorna um bloco, então o ';' é sempre obrigatório.
+
+        // Esta parte da sua lógica para o ';' já está bem próxima do que precisa,
+        // mas é bom confirmar se parseComando() pode retornar um bloco {}
+        // Se ele pode retornar um bloco, a lógica do ';' precisa ser mais sofisticada.
+        // Por enquanto, vamos manter a sua lógica do ';', que já parece tratar a ausência
+        // antes de FIM_ENQUANTO como uma exceção.
         if (!expect(TokenType::PONTO_VIRGULA))
         {
-            // Se não encontrou ';', verifica se não é o FIM_ENQUANTO ou FIM_ARQUIVO
-            // (que seriam os delimitadores de fim de bloco).
             if (currentToken.type != TokenType::FIM_ENQUANTO && currentToken.type != TokenType::FIM_ARQUIVO)
             {
                 error("Esperado ';' apos comando dentro do 'enquanto'.");
                 return nullptr;
             }
-            // Se for FIM_ENQUANTO ou FIM_ARQUIVO, significa que o loop terminou sem o último ';'.
-            // Para ser estrito:
-            // error("Esperado ';' apos o último comando do bloco 'enquanto'.");
-            // return nullptr;
         }
     }
 
-    if (!expect(TokenType::FIM_ENQUANTO))
+    if (!expect(TokenType::FIM_ENQUANTO)) // Consome 'fim_enquanto'
     {
         error("Esperado 'fim_enquanto' para fechar o bloco 'enquanto'.");
         return nullptr;

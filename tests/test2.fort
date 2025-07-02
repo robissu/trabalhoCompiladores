@@ -7,7 +7,7 @@ var
 inicio
     escrever('Digite um numero:');
     ler(numero);
-    se numero > 0 entao
+    se (numero > 0) entao
         escrever('O numero e positivo')
     senao
         escrever('O numero e negativo ou zero');
