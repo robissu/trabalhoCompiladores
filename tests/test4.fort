@@ -11,22 +11,22 @@ inicio
     { Testa diferentes operadores relacionais }
     se x = y entao
         escrever('x igual a y');
-    
+    fim_se
     se x <> y entao
         escrever('x diferente de y');
-    
+    fim_se
     se x < y entao
         escrever('x menor que y');
-    
+    fim_se
     se x <= y entao
         escrever('x menor ou igual a y');
-    
+    fim_se
     se x > y entao
         escrever('x maior que y');
-    
+    fim_se
     se x >= y entao
         escrever('x maior ou igual a y');
-    
+    fim_se
     { Expressão complexa }
     resultado := (x + y) * z - (x - y);
     escrever('Resultado da expressao complexa:', resultado);

@@ -10,8 +10,10 @@ Parser::Parser(Lexer &lexer) : lexer(lexer)
 void Parser::advance()
 {
     currentToken = lexer.nextToken();
+    while (currentToken.type == TokenType::COMENTARIO) {
+        currentToken = lexer.nextToken();
+    }
 }
-
 bool Parser::match(TokenType expected)
 {
     return currentToken.type == expected;
@@ -191,50 +193,57 @@ ASTNodePtr Parser::parseListaComandos()
 {
     auto node = std::make_shared<ASTNode>(NodeType::LISTA_COMANDOS);
 
-    // O loop continua enquanto NÃO for 'FIM' e NÃO for 'FIM_ARQUIVO'
-    // A condição de parada 'FIM' deve ser verificada apos tentar consumir o ';'
-    while (!match(TokenType::FIM) && !match(TokenType::FIM_ARQUIVO))
+    // O loop continua enquanto o token atual NÃO for um dos delimitadores de fim de bloco
+    while (!match(TokenType::FIM) &&            // FIM do programa
+           !match(TokenType::FIM_ARQUIVO) &&    // FIM do arquivo
+           !match(TokenType::SENAO) &&          // SENAO do bloco SE
+           !match(TokenType::FIM_SE) &&         // FIM_SE do bloco SE
+           !match(TokenType::FIM_ENQUANTO))     // FIM_ENQUANTO do bloco ENQUANTO
     {
         auto comando = parseComando();
         if (comando)
         {
             node->addChild(comando);
+
+            // === TRATAMENTO DE PONTO E VÍRGULA ===
+            // Comandos como SE e ENQUANTO já gerenciam seu próprio fim de bloco
+            // e não exigem um ponto e vírgula após o seu término.
+            // Outros comandos (atribuição, ler, escrever) geralmente exigem.
+            if (comando->type != NodeType::SE && comando->type != NodeType::ENQUANTO) {
+                if (!expect(TokenType::PONTO_VIRGULA)) {
+                    // Se o ponto e vírgula estiver faltando, mas o token atual for um
+                    // delimitador de bloco (que não exige ';' precedente), não é um erro.
+                    if (currentToken.type != TokenType::FIM_SE &&
+                        currentToken.type != TokenType::SENAO &&
+                        currentToken.type != TokenType::FIM_ENQUANTO &&
+                        currentToken.type != TokenType::FIM &&
+                        currentToken.type != TokenType::FIM_ARQUIVO)
+                    {
+                        error("Esperado ';' apos comando.");
+                        return nullptr;
+                    }
+                }
+            }
+            // Para comandos SE ou ENQUANTO, nenhum ';' é esperado aqui.
+            // O loop simplesmente continuará para o próximo comando ou terminará
+            // se um delimitador global (como FIM) for encontrado.
         }
         else
         {
-            // Se parseComando retornou nullptr (sem um comando válido)
-            // e não é um token de fim, então é um erro.
-            if (!hasError() && !match(TokenType::FIM) && !match(TokenType::FIM_ARQUIVO))
+            // Se parseComando retornou nullptr (sem um comando válido),
+            // e não estamos em um token de término de bloco esperado (ou já há um erro),
+            // então é um novo erro.
+            if (!hasError() &&
+                !match(TokenType::FIM) && !match(TokenType::FIM_ARQUIVO) &&
+                !match(TokenType::SENAO) && !match(TokenType::FIM_SE) && !match(TokenType::FIM_ENQUANTO))
             {
-                error("Comando inesperado ou faltou ';'."); // Mensagem mais genérica
-                return nullptr;
+                error("Comando inesperado ou faltou ';'.");
+                return nullptr; // Propaga o erro
             }
-            // Se chegou aqui e é um token de fim, significa que não há mais comandos.
-            break;
+            break; // Se é um token de término de bloco ou já há erro, sai do loop.
+                   // A função pai (parseSe, parseEnquanto, parsePrograma) irá lidar com o token.
         }
-
-        // --- ALTERAÇÃO AQUI: Torna o ';' obrigatório ---
-        // Agora, o ';' é SEMPRE esperado apos um comando, a menos que seja o FIM_ARQUIVO.
-        // FIM não é mais uma exceção para a ausência de ';'.
-        if (!expect(TokenType::PONTO_VIRGULA))
-        {
-            // Se não encontrou ';', verifica se não é o FIM_ARQUIVO, que é o único caso permitido para não ter ';'.
-            if (currentToken.type != TokenType::FIM_ARQUIVO)
-            {
-                error("Esperado ';' apos comando.");
-                return nullptr;
-            }
-            // Se for FIM_ARQUIVO, significa que o programa terminou sem o último ';',
-            // o que ainda é um erro pela nova regra, mas pode ser capturado pelo parsePrograma()
-            // Para ser estrito:
-            // error("Esperado ';' apos o último comando do bloco.");
-            // return nullptr;
-        }
-        // Se a gramática do 'programa' exige 'fim.' sem um ';' antes,
-        // então essa regra aqui deve ser ligeiramente mais flexível para o último comando do PROGRAMA,
-        // mas para *todos os outros blocos*, o ';' será estritamente necessário.
     }
-
     return node;
 }
 
@@ -295,51 +304,74 @@ ASTNodePtr Parser::parseSe()
 {
     auto node = std::make_shared<ASTNode>(NodeType::SE);
 
-    if (!expect(TokenType::SE)) // Consome 'se'
-    {
+    // 1. Consome 'se'
+    if (!expect(TokenType::SE)) {
         return nullptr;
     }
 
-    // Verifica se há um parêntese esquerdo (ABRE_PARENTESES)
+    // 2. Lida com os parênteses opcionais da condição
     bool hasParentheses = false;
-    if (match(TokenType::PARENTESE_ESQ)) { // Verifica se o próximo token é '('
+    if (match(TokenType::PARENTESE_ESQ)) {
         hasParentheses = true;
-        advance(); // Consome o '('
+        advance(); // Consome '('
     }
 
-    auto expr = parseExpressao(); // Parsers a expressão
-    if (expr)
-        node->addChild(expr);
+    // 3. Analisa a expressão condicional
+    auto condicao = parseExpressao();
+    if (!condicao) {
+        return nullptr;
+    }
+    node->addChild(condicao);
 
-    // Se encontramos um '(' antes da expressão, agora esperamos um ')' depois dela
+    // 4. Consome ')' se houver parênteses
     if (hasParentheses) {
-        if (!expect(TokenType::PARENTESE_DIR)) { // Consome o ')'
-            error("Esperado ')' apos a condição do 'se'.");
+        if (!expect(TokenType::PARENTESE_DIR)) {
+            error("Esperado ')' apos a condicao do 'se'.");
             return nullptr;
         }
     }
 
-    if (!expect(TokenType::ENTAO)) // Consome 'entao'
-    {
-        error("Esperado 'entao' apos condição");
+    // 5. Consome 'entao'
+    if (!expect(TokenType::ENTAO)) {
+        error("Esperado 'entao' apos condicao.");
         return nullptr;
     }
 
-    auto cmdThen = parseComando();
-    if (cmdThen)
-        node->addChild(cmdThen);
+    // 6. Espera a LISTA DE COMANDOS para o bloco 'ENTAO'
+    auto blocoEntao = parseListaComandos();
+    if (!blocoEntao) {
+        return nullptr;
+    }
+    node->addChild(blocoEntao);
 
-    if (match(TokenType::SENAO))
-    {
-        advance();
-        auto cmdElse = parseComando();
-        if (cmdElse)
-            node->addChild(cmdElse);
+    // --- Trata o SENAO e o FIM_SE UNIFICADAMENTE ---
+    // O FIM_SE final só é esperado uma vez para toda a estrutura SE-SENAO.
+
+    if (match(TokenType::SENAO)) { // Se há uma cláusula 'senao'
+        advance(); // Consome 'senao'
+        
+        // 7. Espera a LISTA DE COMANDOS para o bloco 'SENAO'
+        auto blocoSenao = parseListaComandos();
+        if (!blocoSenao) {
+            return nullptr;
+        }
+        node->addChild(blocoSenao);
+
+        // 8. O FIM_SE para toda a estrutura SE-SENAO, APÓS o bloco SENAO
+        if (!expect(TokenType::FIM_SE)) {
+            error("Esperado 'fim_se' apos o bloco 'senao'.");
+            return nullptr;
+        }
+    } else { // Se NÃO HÁ cláusula 'senao'
+        // 9. O FIM_SE para o SE sem SENAO, APÓS o bloco ENTAO
+        if (!expect(TokenType::FIM_SE)) {
+            error("Esperado 'fim_se' apos o bloco 'entao'.");
+            return nullptr;
+        }
     }
 
     return node;
 }
-
 ASTNodePtr Parser::parseEnquanto()
 {
     auto whileNode = std::make_shared<ASTNode>(NodeType::ENQUANTO, currentToken);

@@ -86,6 +86,8 @@ std::string tokenTypeToString(TokenType type)
         return "FIM_ARQUIVO";
     case TokenType::ERRO:
         return "ERRO";
+    case TokenType::FIM_SE:
+        return "FIM_SE";
     case TokenType::COMENTARIO:
         return "COMENTARIO";
     default:
@@ -116,6 +118,7 @@ void Lexer::initKeywords()
     keywords["verdadeiro"] = TokenType::VERDADEIRO;
     keywords["falso"] = TokenType::FALSO;
     keywords["fim_enquanto"] = TokenType::FIM_ENQUANTO;
+    keywords["fim_se"] = TokenType::FIM_SE;
 }
 
 char Lexer::currentChar()

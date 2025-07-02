@@ -1,5 +1,3 @@
-
-{ Teste 2: Estrutura condicional Se-Então-Senão }
 programa teste2;
 var
     numero : inteiro;
@@ -7,13 +5,19 @@ var
 inicio
     escrever('Digite um numero:');
     ler(numero);
+
     se (numero > 0) entao
-        escrever('O numero e positivo')
-    senao
+        escrever('O numero e positivo');
+        escrever('Que legal, e positivo!'); 
+    senao 
         escrever('O numero e negativo ou zero');
-    
+        escrever('Tente outro numero da proxima vez.'); 
+    fim_se 
+
     { Teste com variável lógica }
     eh_positivo := numero > 0;
     se eh_positivo entao
         escrever('Confirmado: numero positivo');
+        escrever('A variavel logica funcionou!'); 
+    fim_se 
 fim.
