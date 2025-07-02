@@ -226,15 +226,13 @@ ASTNodePtr Parser::parseListaComandos()
             }
             // Se for FIM_ARQUIVO, significa que o programa terminou sem o último ';',
             // o que ainda é um erro pela nova regra, mas pode ser capturado pelo parsePrograma()
-            // ou você pode deixar essa verificação mais tarde se o 'fim.' precisar de ';' antes.
             // Para ser estrito:
             // error("Esperado ';' apos o último comando do bloco.");
             // return nullptr;
         }
-        // Se a gramática do seu 'programa' exige 'fim.' sem um ';' antes,
+        // Se a gramática do 'programa' exige 'fim.' sem um ';' antes,
         // então essa regra aqui deve ser ligeiramente mais flexível para o último comando do PROGRAMA,
         // mas para *todos os outros blocos*, o ';' será estritamente necessário.
-        // Vamos testar esta versão mais estrita primeiro.
     }
 
     return node;
