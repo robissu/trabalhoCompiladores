@@ -176,7 +176,7 @@ void Lexer::skipComment()
         }
         else
         {
-            // Se o comentário não for fechado, você pode querer reportar um erro aqui
+            // Se o comentário nao for fechado, você pode querer reportar um erro aqui
             // Por enquanto, apenas avança até o fim do arquivo ou do bloco de texto
         }
     }

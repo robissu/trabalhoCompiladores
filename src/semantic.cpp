@@ -1,4 +1,3 @@
-
 #include "semantic.h"
 #include <iostream>
 
@@ -42,15 +41,16 @@ void SemanticAnalyzer::analyzeDeclarations(ASTNodePtr node) {
         SymbolType symbolType = (tipo->token.type == TokenType::INTEIRO) ? 
                                SymbolType::INTEIRO : SymbolType::LOGICO;
         
-        // Processa cada variável na lista
+        // Processa cada variavel na lista
         for (auto var : listaVar->children) {
             if (!symbolTable.declare(var->token.value, symbolType)) {
-                error("Variável '" + var->token.value + "' já foi declarada", var->token.line);
+                error("Variavel '" + var->token.value + "' ja foi declarada", var->token.line);
                 return;
             }
         }
     }
 }
+
 void SemanticAnalyzer::analyzeCommands(ASTNodePtr node) {
     if (!node) return;
     
@@ -91,7 +91,7 @@ void SemanticAnalyzer::analyzeAssignment(ASTNodePtr node) {
     auto expr = node->children[1];
     
     if (!symbolTable.exists(var->token.value)) {
-        error("Variável '" + var->token.value + "' não foi declarada", var->token.line);
+        error("Variavel '" + var->token.value + "' nao foi declarada", var->token.line);
         return;
     }
     
@@ -109,14 +109,14 @@ void SemanticAnalyzer::analyzeIf(ASTNodePtr node) {
     auto condition = node->children[0];
     SymbolType condType = getExpressionType(condition);
     
-    if (condType != SymbolType::INTEIRO) {
-        error("condicao do 'se' deve ser do tipo inteiro", condition->token.line);
+    if (condType != SymbolType::LOGICO) { 
+        error("Condicao do 'se' deve ser do tipo logico", condition->token.line);
         return;
     }
     
-    // Analisa comandos then e else
     for (size_t i = 1; i < node->children.size(); i++) {
         analyzeCommand(node->children[i]);
+        if (hasError()) return;
     }
 }
 
@@ -126,40 +126,42 @@ void SemanticAnalyzer::analyzeWhile(ASTNodePtr node) {
     auto condition = node->children[0];
     SymbolType condType = getExpressionType(condition);
     
-    if (condType != SymbolType::INTEIRO) {
-        error("condicao do 'enquanto' deve ser do tipo inteiro", condition->token.line);
+    if (condType != SymbolType::LOGICO) {
+        error("Condicao do 'enquanto' deve ser do tipo logico", condition->token.line);
         return;
     }
     
-    // Analisa comando do corpo
     if (node->children.size() > 1) {
         analyzeCommand(node->children[1]);
+        if (hasError()) return;
     }
 }
 
 void SemanticAnalyzer::analyzeRead(ASTNodePtr node) {
-    if (!node) return;
+    if (!node || node->children.empty()) return;
     
-    for (auto var : node->children) {
-        if (!symbolTable.exists(var->token.value)) {
-            error("Variável '" + var->token.value + "' não foi declarada", var->token.line);
-            return;
+    for (auto idNode : node->children) {
+        if (idNode->type == NodeType::IDENTIFICADOR) {
+            std::string varName = idNode->token.value;
+            if (!symbolTable.exists(varName)) {
+                error("Variavel '" + varName + "' nao foi declarada", idNode->token.line);
+            }
         }
     }
 }
 
 void SemanticAnalyzer::analyzeWrite(ASTNodePtr node) {
-    if (!node) return;
+    if (!node || node->children.empty()) return;
     
     for (auto expr : node->children) {
-        getExpressionType(expr); // Verifica se a expressão é válida
+        getExpressionType(expr);
         if (hasError()) return;
     }
 }
 
 SymbolType SemanticAnalyzer::getExpressionType(ASTNodePtr node) {
     if (!node) return SymbolType::INTEIRO;
-    
+
     switch (node->type) {
         case NodeType::NUMERO:
             return SymbolType::INTEIRO;
@@ -172,11 +174,17 @@ SymbolType SemanticAnalyzer::getExpressionType(ASTNodePtr node) {
             return SymbolType::INTEIRO;
             
         case NodeType::IDENTIFICADOR: {
-            if (!symbolTable.exists(node->token.value)) {
-                error("Variável '" + node->token.value + "' não foi declarada", node->token.line);
+            std::string varName = node->token.value;
+            if (!symbolTable.exists(varName)) {
+                error("Variavel '" + varName + "' nao foi declarada", node->token.line);
                 return SymbolType::INTEIRO;
             }
-            Symbol* symbol = symbolTable.get(node->token.value);
+            Symbol* symbol = symbolTable.get(varName);
+            // === REMOÇÃO: A verificação de inicialização foi movida para o interpretador. ===
+            // if (!symbol->initialized) {
+            //     error("Variavel '" + varName + "' nao foi inicializada", node->token.line);
+            // }
+            // ==============================================================================
             return symbol->type;
         }
         
@@ -186,19 +194,29 @@ SymbolType SemanticAnalyzer::getExpressionType(ASTNodePtr node) {
             SymbolType leftType = getExpressionType(node->children[0]);
             SymbolType rightType = getExpressionType(node->children[1]);
             
-            // Operadores relacionais sempre retornam inteiro (0 ou 1)
             if (node->token.type == TokenType::IGUAL || 
                 node->token.type == TokenType::DIFERENTE ||
                 node->token.type == TokenType::MENOR ||
                 node->token.type == TokenType::MENOR_IGUAL ||
                 node->token.type == TokenType::MAIOR ||
                 node->token.type == TokenType::MAIOR_IGUAL) {
-                return SymbolType::INTEIRO;
+                
+                if (leftType != SymbolType::INTEIRO || rightType != SymbolType::INTEIRO) {
+                    error("Operadores relacionais esperam operandos inteiros", node->token.line);
+                }
+                return SymbolType::LOGICO;
             }
             
-            // Operadores aritméticos
-            if (leftType != rightType) {
-                error("Tipos incompativeis na operação", node->token.line);
+            if (node->token.type == TokenType::MAIS ||
+                node->token.type == TokenType::MENOS ||
+                node->token.type == TokenType::MULTIPLICACAO ||
+                node->token.type == TokenType::DIVISAO) {
+                
+                if (leftType != SymbolType::INTEIRO || rightType != SymbolType::INTEIRO) {
+                    error("Operadores aritmeticos esperam operandos inteiros", node->token.line);
+                    return SymbolType::INTEIRO;
+                }
+                return SymbolType::INTEIRO;
             }
             
             return leftType;
@@ -206,7 +224,15 @@ SymbolType SemanticAnalyzer::getExpressionType(ASTNodePtr node) {
         
         case NodeType::UNARIO: {
             if (node->children.empty()) return SymbolType::INTEIRO;
-            return getExpressionType(node->children[0]);
+            SymbolType operandType = getExpressionType(node->children[0]);
+            if (node->token.type == TokenType::MENOS) {
+                if (operandType != SymbolType::INTEIRO) {
+                    error("Operador unario '-' espera operando inteiro", node->token.line);
+                    return SymbolType::INTEIRO;
+                }
+                return SymbolType::INTEIRO;
+            }
+            return operandType;
         }
         
         default:

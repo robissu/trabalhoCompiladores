@@ -193,7 +193,7 @@ ASTNodePtr Parser::parseListaComandos()
 {
     auto node = std::make_shared<ASTNode>(NodeType::LISTA_COMANDOS);
 
-    // O loop continua enquanto o token atual NÃO for um dos delimitadores de fim de bloco
+    // O loop continua enquanto o token atual nao for um dos delimitadores de fim de bloco
     while (!match(TokenType::FIM) &&            // FIM do programa
            !match(TokenType::FIM_ARQUIVO) &&    // FIM do arquivo
            !match(TokenType::SENAO) &&          // SENAO do bloco SE
@@ -207,12 +207,12 @@ ASTNodePtr Parser::parseListaComandos()
 
             // === TRATAMENTO DE PONTO E VÍRGULA ===
             // Comandos como SE e ENQUANTO já gerenciam seu próprio fim de bloco
-            // e não exigem um ponto e vírgula após o seu término.
+            // e nao exigem um ponto e vírgula após o seu término.
             // Outros comandos (atribuição, ler, escrever) geralmente exigem.
             if (comando->type != NodeType::SE && comando->type != NodeType::ENQUANTO) {
                 if (!expect(TokenType::PONTO_VIRGULA)) {
                     // Se o ponto e vírgula estiver faltando, mas o token atual for um
-                    // delimitador de bloco (que não exige ';' precedente), não é um erro.
+                    // delimitador de bloco (que nao exige ';' precedente), nao é um erro.
                     if (currentToken.type != TokenType::FIM_SE &&
                         currentToken.type != TokenType::SENAO &&
                         currentToken.type != TokenType::FIM_ENQUANTO &&
@@ -231,7 +231,7 @@ ASTNodePtr Parser::parseListaComandos()
         else
         {
             // Se parseComando retornou nullptr (sem um comando válido),
-            // e não estamos em um token de término de bloco esperado (ou já há um erro),
+            // e nao estamos em um token de término de bloco esperado (ou já há um erro),
             // então é um novo erro.
             if (!hasError() &&
                 !match(TokenType::FIM) && !match(TokenType::FIM_ARQUIVO) &&
@@ -362,7 +362,7 @@ ASTNodePtr Parser::parseSe()
             error("Esperado 'fim_se' apos o bloco 'senao'.");
             return nullptr;
         }
-    } else { // Se NÃO HÁ cláusula 'senao'
+    } else { // Se nao HÁ cláusula 'senao'
         // 9. O FIM_SE para o SE sem SENAO, APÓS o bloco ENTAO
         if (!expect(TokenType::FIM_SE)) {
             error("Esperado 'fim_se' apos o bloco 'entao'.");
@@ -431,7 +431,7 @@ ASTNodePtr Parser::parseEnquanto()
             return nullptr;
         }
 
-        // Correção no ';': um comando simples deve ter ';'. Um bloco de chaves não.
+        // Correção no ';': um comando simples deve ter ';'. Um bloco de chaves nao.
         // Se a regra é "qualquer comando dentro do laço deve ter ';'",
         // então seu parseComando() precisa ser capaz de diferenciar um comando simples de um bloco.
         // Assumindo que parseComando() já retorna um comando simples ou um bloco completo.

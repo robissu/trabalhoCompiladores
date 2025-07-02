@@ -1,0 +1,7 @@
+programa teste_curto_init;
+var
+    num : inteiro;
+    log : logico;
+inicio
+    escrever(z)
+fim.

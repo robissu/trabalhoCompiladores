@@ -15,7 +15,7 @@ inicio
     fim_se 
 
     { Teste com variável lógica }
-    eh_positivo := numero > 0;
+    eh_positivo :=  0;
     se eh_positivo entao
         escrever('Confirmado: numero positivo');
         escrever('A variavel logica funcionou!'); 

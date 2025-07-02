@@ -208,7 +208,7 @@ std::variant<int, bool> Interpreter::evaluateExpression(ASTNodePtr node) {
         case NodeType::IDENTIFICADOR: {
             Symbol* symbol = symbolTable.get(node->token.value);
             if (!symbol || !symbol->initialized) {
-                error("Variável '" + node->token.value + "' não foi inicializada");
+                error("Variável '" + node->token.value + "' nao foi inicializada");
                 return 0;
             }
             return symbol->value;

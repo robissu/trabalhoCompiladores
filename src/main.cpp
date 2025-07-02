@@ -96,7 +96,7 @@ bool compileAndRun(const std::string &filename)
 void runTests() {
     std::cout << "\n=== EXECUTANDO TESTES ===" << std::endl;
     
-    for (int i = 1; i <= 5; i++) { //  '5' para o número total de seus testes
+    for (int i = 1; i <= 6; i++) { //  '5' para o número total de seus testes
         
         std::string filename = "tests/test" + std::to_string(i) + ".fort"; // <--caminho da pasta
         
