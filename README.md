@@ -37,46 +37,73 @@ A Fortall é inspirada em linguagens como C e Pascal, com foco em clareza e estr
 <summary><strong>Clique para expandir a gramática</strong></summary>
 
 ```ebnf
-<Programa>         ::= <Bloco>
-<Bloco>            ::= "{" { <Declaracao> | <Comando> } "}"
-<Declaracao>       ::= "var" <Identificador> ":" <Tipo> ";"
-<Tipo>             ::= "int" | "float" | "bool"
-<Comando>          ::= <Atribuicao> ";"
-                   |   <Entrada> ";"
-                   |   <Saida> ";"
-                   |   <Condicional>
-                   |   <LacoEnquanto>
-                   |   <Bloco>
-<Atribuicao>       ::= <Identificador> "=" <Expressao>
-<Entrada>          ::= "leia" <Identificador>
-<Saida>            ::= "escreva" <Expressao>
-<Condicional>      ::= "se" "(" <Expressao> ")" <Comando> [ "senao" <Comando> ]
-<LacoEnquanto>     ::= "enquanto" "(" <Expressao> ")" <Comando>
+---
 
-<Expressao>        ::= <ExpressaoBooleana>
-<ExpressaoBooleana>::= <ExpressaoAritmetica> [ ( "==" | "!=" | "<" | ">" | "<=" | ">=" ) <ExpressaoAritmetica> ]
+## 📚 Gramática da Linguagem Fortall (EBNF)
+
+A Fortall é inspirada em linguagens como C e Pascal, com foco em clareza e estrutura. Abaixo, a gramática principal, **ajustada para refletir a sintaxe implementada**:
+
+<details>
+<summary><strong>Clique para expandir a gramática</strong></summary>
+
+```ebnf
+<Programa>           ::= "programa" <Identificador> ";"
+                       [ <SecaoVariaveis> ]
+                       "inicio"
+                       <ListaComandos>
+                       "fim."
+
+<SecaoVariaveis>     ::= "var" <ListaDeclaracoes>
+<ListaDeclaracoes>   ::= <Declaracao> { <Declaracao> }
+<Declaracao>         ::= <ListaIdentificadores> ":" <Tipo> ";"
+<ListaIdentificadores>::= <Identificador> { "," <Identificador> }
+<Tipo>               ::= "inteiro" | "logico"
+
+<ListaComandos>      ::= { <Comando> }
+<Comando>            ::= <Atribuicao> ";"
+                       | <ChamadaEntrada> ";"
+                       | <ChamadaSaida> ";"
+                       | <Condicional>
+                       | <LacoEnquanto>
+
+<Atribuicao>         ::= <Identificador> ":=" <Expressao>
+<ChamadaEntrada>     ::= "ler" "(" <ListaIdentificadores> ")"
+<ChamadaSaida>       ::= "escrever" "(" <ListaExpressoes> ")"
+<ListaExpressoes>    ::= <Expressao> { "," <Expressao> }
+
+<Condicional>        ::= "se" "(" <Expressao> ")" "entao"
+                       <ListaComandos>
+                       [ "senao"
+                       <ListaComandos> ]
+                       "fim_se"
+
+<LacoEnquanto>       ::= "enquanto" "(" <Expressao> ")" "faca"
+                       <ListaComandos>
+                       "fim_enquanto"
+
+<Expressao>          ::= <ExpressaoRelacional>
+<ExpressaoRelacional>::= <ExpressaoAritmetica> [ ( "==" | "!=" | "<" | ">" | "<=" | ">=" ) <ExpressaoAritmetica> ]
 <ExpressaoAritmetica>::= <Termo> { ( "+" | "-" ) <Termo> }
-<Termo>            ::= <Fator> { ( "*" | "/" ) <Fator> }
-<Fator>            ::= <NumeroInteiro>
-                   |   <NumeroFloat>
-                   |   <ValorBooleano>
-                   |   <Identificador>
-                   |   "(" <Expressao> ")"
-                   |   ( "-" | "!" ) <Fator>
+<Termo>              ::= <Fator> { ( "*" | "/" ) <Fator> }
+<Fator>              ::= <NumeroInteiro>
+                       | <ValorBooleano>
+                       | <Identificador>
+                       | "(" <Expressao> ")"
+                       | "-" <Fator>
 
-<Identificador>    ::= <Letra> { <Letra> | <Digito> | "_" }
-<NumeroInteiro>    ::= <Digito> { <Digito> }
-<NumeroFloat>      ::= <NumeroInteiro> "." <NumeroInteiro>
-<ValorBooleano>    ::= "verdadeiro" | "falso"
+<Identificador>      ::= <Letra> { <Letra> | <Digito> | "_" }
+<NumeroInteiro>      ::= <Digito> { <Digito> }
+<ValorBooleano>      ::= "verdadeiro" | "falso"
 
-<Letra>            ::= 'a'..'z' | 'A'..'Z'
-<Digito>           ::= '0'..'9'
+<Letra>              ::= 'a'..'z' | 'A'..'Z'
+<Digito>             ::= '0'..'9'
 ```
 
 > 💡 *Observações:*  
 > - Todos os comandos (exceto blocos e estruturas de controle) terminam com `;`  
-> - Tipos básicos suportados: `int`, `float`, `bool`  
-> - Suporte a operadores aritméticos, relacionais e unários
+> - Tipos básicos suportados: `inteiro`, `logico` 
+> - Suporte a operadores aritméticos, relacionais e o operador unário de negação (-) para inteiros.
+> - Condicionais e laços exigem expressões lógicas entre parênteses.
 
 </details>
 
@@ -142,6 +169,10 @@ O `compile.bat` oferece um menu interativo após a compilação:
 - Implementado em `semantic.cpp/.h`
 - Usa **tabela de símbolos** (`symbol_table.cpp/.h`)
 - Verifica declarações, tipos e escopo
+- Realiza a verificação de tipos para atribuições, expressões e condições de controle de fluxo (se, enquanto).
+- Garante que operações relacionais (==, !=, >, <, >=, <=) resultem em valores lógicos (LOGICO) e que operações aritméticas resultem em inteiros.
+- Detecta o uso de variáveis não declaradas.
+- A verificação de inicialização de variáveis antes de seu uso em expressões é delegada à fase de Interpretação, para maior flexibilidade e precisão em tempo de execução, especialmente para variáveis lidas via ler.
 - Popula informações das variáveis e gera erros semânticos
 
 ### 🔹 Interpretação (Interpreter)
@@ -149,6 +180,7 @@ O `compile.bat` oferece um menu interativo após a compilação:
 - Executa a **AST validada**
 - Suporta expressões, comandos, controle de fluxo
 - Simula memória com a tabela de símbolos
+- É responsável por inicializar variáveis quando um valor é atribuído ou lido (:=, ler), e por reportar erros de uso de variáveis não inicializadas durante a execução.
 - Reporta erros em tempo de execução (ex: divisão por zero)
 
 ---
