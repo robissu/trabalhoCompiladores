@@ -39,9 +39,8 @@ std::string tokenTypeToString(TokenType type)
         return "VERDADEIRO";
     case TokenType::FALSO:
         return "FALSO";
-    // NOVO TOKEN AQUI:
     case TokenType::FIM_ENQUANTO:
-        return "FIM_ENQUANTO"; // <-- ADICIONE ESTA LINHA
+        return "FIM_ENQUANTO";
     case TokenType::IDENTIFICADOR:
         return "IDENTIFICADOR";
     case TokenType::NUMERO:
@@ -91,7 +90,7 @@ std::string tokenTypeToString(TokenType type)
     case TokenType::ERRO:
         return "ERRO";
     case TokenType::COMENTARIO:
-        return "COMENTARIO"; // Você tem COMENTARIO no enum mas não no switch. Considere adicionar.
+        return "COMENTARIO";
     default:
         return "DESCONHECIDO";
     }
@@ -102,7 +101,6 @@ Lexer::Lexer(const std::string &input) : input(input), position(0), line(1), col
     initKeywords();
 }
 
-// MÉTODO initKeywords: Adicione "fim_enquanto" ao mapa de palavras-chave
 void Lexer::initKeywords()
 {
     keywords["programa"] = TokenType::PROGRAMA;
@@ -120,7 +118,7 @@ void Lexer::initKeywords()
     keywords["escrever"] = TokenType::ESCREVER;
     keywords["verdadeiro"] = TokenType::VERDADEIRO;
     keywords["falso"] = TokenType::FALSO;
-    keywords["fim_enquanto"] = TokenType::FIM_ENQUANTO; // <-- ADICIONE ESTA LINHA
+    keywords["fim_enquanto"] = TokenType::FIM_ENQUANTO;
 }
 
 char Lexer::currentChar()
@@ -210,33 +208,24 @@ Token Lexer::readString()
     while (currentChar() != '\0' && currentChar() != '\'')
     {
         // Lógica para caracteres de escape (se Fortall suportar, como '\n', '\t', etc.)
-        // CUIDADO: Seu código atual parece suportar '\n' e '\t' mas apenas quando '\' é o char.
+        // CUIDADO: código atual parece suportar '\n' e '\t' mas apenas quando '\' é o char.
         // No Fortall (Pascal-like), aspas dentro de strings são geralmente duplicadas ('It''s').
-        // Se a sua string literal é como Pascal:
-        // if (currentChar() == '\'' && peek() == '\'') {
-        //     str += '\'';
-        //     advance(); // Consome a primeira aspa
-        //     advance(); // Consome a segunda aspa
-        // } else {
-        //     str += currentChar();
-        //     advance();
-        // }
-        // Se for mais simples e não suporta escapes ou aspas duplas, apenas:
+
         str += currentChar();
         advance();
     }
 
     if (currentChar() == '\'')
     {
-        advance(); // Skip closing quote
+        advance(); 
     }
     else
     {
-        // ERRO: String literal não fechada
+        
         return Token(TokenType::ERRO, str, line, startColumn);
     }
 
-    return Token(TokenType::STRING, str, line, startColumn); // Certifique-se que o TokenType é STRING
+    return Token(TokenType::STRING, str, line, startColumn);
 }
 
 Token Lexer::readIdentifier()
@@ -271,15 +260,13 @@ Token Lexer::nextToken() {
             return Token(TokenType::FIM_ARQUIVO, "", line, column);
         }
 
-        // Try to skip a comment
-        size_t oldPosition = position; // Use size_t for oldPosition
+        
+        size_t oldPosition = position; 
         skipComment();
 
-        // If skipComment() actually skipped something (position changed),
-        // then there might be more whitespace or another comment *after* this one.
-        // So, continue the outer loop to process them.
+       
         if (position != oldPosition) {
-            continue; // Go back to the start of the outer loop (skipWhitespace again)
+            continue; 
         }
         
         // If we reach here, it means:
@@ -289,12 +276,11 @@ Token Lexer::nextToken() {
         break; 
     }
 
-    // Now, the `currentChar()` is at the beginning of a real token or it's EOF.
+   
     int currentLine = line;
     int currentColumn = column;
     
-    // No need for 'if (currentChar() == '\0')' here again, as it's handled above
-    // when we break out of the skipping loop.
+  
 
     if (std::isalpha(currentChar()) || currentChar() == '_') {
         return readIdentifier();
@@ -363,10 +349,10 @@ Token Lexer::nextToken() {
         case ')':
             advance();
             return Token(TokenType::PARENTESE_DIR, ")", currentLine, currentColumn);
-        case '[': // Corrected from PARENTESE_ESQ
+        case '[': 
             advance();
             return Token(TokenType::COLCHETE_ESQ, "[", currentLine, currentColumn);
-        case ']': // Corrected from PARENTESE_DIR
+        case ']': 
             advance();
             return Token(TokenType::COLCHETE_DIR, "]", currentLine, currentColumn);
         default:
