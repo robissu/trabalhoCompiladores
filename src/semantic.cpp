@@ -51,9 +51,6 @@ void SemanticAnalyzer::analyzeDeclarations(ASTNodePtr node) {
         }
     }
 }
-
-// ... keep existing code (analyzeCommands, analyzeCommand, analyzeAssignment, analyzeIf, analyzeWhile, analyzeRead, analyzeWrite, getExpressionType methods)
-
 void SemanticAnalyzer::analyzeCommands(ASTNodePtr node) {
     if (!node) return;
     
