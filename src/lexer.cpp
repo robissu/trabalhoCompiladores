@@ -1,10 +1,7 @@
-// lexer.cpp
-
 #include "lexer.h"
 #include <cctype>
 #include <iostream>
 
-// FUNÇÃO tokenTypeToString: Adicione o novo caso para FIM_ENQUANTO
 std::string tokenTypeToString(TokenType type)
 {
     switch (type)
